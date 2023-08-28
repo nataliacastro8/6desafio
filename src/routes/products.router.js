@@ -1,25 +1,25 @@
 import { Router } from "express";
-import ProductManager from "../dao/models/ProductManager.js"
+import ProductManager from "../dao/ProductManager.js"
 
 const productsRouter = Router();
 const productManager = new ProductManager();
 
 
 productsRouter.get("/", async (req, res) => {
-    const products = await productManager.getProducts();
     let {limit} = req.query;
+    const products = await productManager.getProducts(limit);
 
-    res.send ({products:limit ? products.slice (0, limit) : products});
+    res.send ({products});
 });
 
 productsRouter.get("/:pid", async (req, res) => {
-    let pid = Number(req.params.pid);
+    let pid = req.params.pid;
     const products = await productManager.getProductById(pid);
   
     res.send({products});
 });
 
-productsRouter.post ("/", (req, res) => {
+productsRouter.post ("/", async (req, res) => {
     let {title, description, code, price, status, stock, category, thumbnail } = req.body;
 
     if(!title){
@@ -63,10 +63,13 @@ productsRouter.post ("/", (req, res) => {
         res.status(400).send({status:"error", message: "Error debe ingresar al menos una imagen"})
         return false;
     }
-    if (productManager.addProduct({title, description, code, price, status, stock, category, thumbnail})) {
-        res.send({status:"ok", message: "Producto agregado correctamente"});
+
+    const result = await productManager.addProduct({title, description, code, price, status, stock, category, thumbnail});
+
+    if (result) {
+        res.send({status:"ok", message:"El Producto se agregó correctamente!"});
     } else {
-        res.status(500).send({status:"error", message: "Error! No se cargo el producto"});
+        res.status(500).send({status:"error", message:"Error! No se pudo agregar el Producto!"});
     }
         
 });
@@ -114,18 +117,22 @@ productsRouter.put ("/:pid", async (req, res) => {
         res.status(400).send({status:"error", message: "Error debe ingresar al menos una imagen"})
         return false;
     }
-    if (await productManager.updateProduct(pid, {title, description, code, price, status, stock, category, thumbnail})) {
-        res.send({status:"ok", message: "Producto actualizado correctamente"});
+
+    const result = await productManager.updateProduct(pid, {title, description, code, price, status, stock, category, thumbnail});
+
+    if (result) {
+        res.send({status:"ok", message:"El Producto se actualizó correctamente!"});
     } else {
-        res.status(500).send({status:"error", message: "Error! No se actualizo el producto"});
+        res.status(500).send({status:"error", message:"Error! No se pudo actualizar el Producto!"});
     }
         
 });
 
-productsRouter.delete ("/:pid", (req, res) => {
-    let pid = Number(req.params.pid);
+productsRouter.delete ("/:pid", async (req, res) => {
+    let pid = req.params.pid;
+    const result = await productManager.deleteProduct(pid)
 
-    if (productManager.deleteProduct(pid)) {
+    if (result) {
         res.send({status:"ok", message: "Producto eliminado correctamente"});
     } else {
         res.status(500).send({status:"error", message: "Error! No existe el producto que se quiere eliminar"});

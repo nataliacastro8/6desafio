@@ -4,17 +4,19 @@ import CartManager from "../dao/CartManager.js"
 const cartsRouter = Router();
 const cartManager = new CartManager();
 
-cartsRouter.post ("/", (req, res) => {
-    if(cartManager.newCart()){
+cartsRouter.post ("/", async (req, res) => {
+    const newCart = await cartManager.newCart();
+
+    if(newCart){
         res.send({status:"ok", message: "Carrito creado correctamente"});
     } else {
         res.status(500).send({status:"error", message: "Error! No se creo el carrito"});
     }
 });
 
-cartsRouter.get("/:cid", (req, res) => {
-    const cid = Number(req.params.cid);
-    const cart = cartManager.getCart(cid);
+cartsRouter.get("/:cid", async (req, res) => {
+    const cid = req.params.cid;
+    const cart = await cartManager.getCart(cid);
 
     if (cart){
         res.send({products:cart.products});
@@ -23,21 +25,16 @@ cartsRouter.get("/:cid", (req, res) => {
     }
 });
 
-cartsRouter.post("/:cid/products/:pid", (req, res) => {
-    const cid = Number(req.params.cid);
-    const pid = Number(req.params.pid);
-    const cart = cartManager.getCart(cid);
+cartsRouter.post("/:cid/products/:pid", async (req, res) => {
+    const cid = req.params.cid;
+    const pid = req.params.pid;
+    const result = await cartManager.addProductToCart(cid, pid);
 
-    if(cart) {
-       if(cartManager.addProductToCart(cid,pid)){
+    if(result) {
         res.send({status:"ok", message: "El producto se agrego correctamente"});
-       }else{
+       } else {
         res.status(400).send({status:"error", message: "Error! No se agrego el producto al carrito"});
        }
-    } else {
-        res.status(400).send({status:"error", message: "Error! No se encontro el id de carrito"})
-    }
-
 });
 
 
